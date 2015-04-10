@@ -53,13 +53,44 @@ Light::Light() {
 	color.push_back(0.0); color.push_back(0.0); color.push_back(0.0);
 	pos.push_back(0.0); pos.push_back(0.0); pos.push_back(0.0);
 }
-
-class Triangle;
-
+//****************************************************
+// Triangle Class
+//****************************************************
 class Triangle {
 	public:
-		vector<float> v1, v2, v3; // x
+		Triangle();
+		Triangle(vector<float>, vector<float>, vector<float>);
+		vector<float> v1, v2, v3;
 };
+
+Triangle::Triangle() {
+	v1.push_back(0.0f); v1.push_back(0.0f); v1.push_back(0.0f);
+	v2.push_back(0.0f); v2.push_back(0.0f); v2.push_back(0.0f);
+	v3.push_back(0.0f); v3.push_back(0.0f); v3.push_back(0.0f);
+}
+
+Triangle::Triangle(vector<float> iv1, vector<float> iv2, vector<float> iv3) {
+	v1 = iv1; v2 = iv2; v3 = iv3;
+}
+
+
+//****************************************************
+// Bezier Surface Patches
+//****************************************************
+class SurfacePatch {
+	public:
+		SurfacePatch();
+		float control_points [4][4];
+};
+
+SurfacePatch::SurfacePatch() {
+	for(int i = 0; i < 4; i++) {
+		for(int j = 0; j < 4; j++) {
+			control_points[i][j] = 0.0f;
+		}
+	}
+}
+
 //****************************************************
 // Global Variables
 //****************************************************
@@ -340,38 +371,74 @@ void myDisplay() {
 }
 
 
+void parse_input(const char* input_file) {
+	const int MAX_CHARS_PER_LINE = 512;
+	const int MAX_TOKENS_PER_LINE = 20;
+	const char* const DELIMITER = " ";
 
+	ifstream fin;
+	fin.open(input_file); // open a file
+
+	if (!fin.good()) { 
+		return; // exit if file not found
+	}
+
+	 // read each line of the file
+	while (!fin.eof()) {
+		// read an entire line into memory
+		char buf[MAX_CHARS_PER_LINE];
+		fin.getline(buf, MAX_CHARS_PER_LINE);
+    
+		// parse the line into blank-delimited tokens
+		int n = 0;
+    
+		// array to store memory addresses of the tokens in buf
+		const char* token[MAX_TOKENS_PER_LINE] = {}; // initialize to 0
+    
+		// parse the line
+		token[0] = strtok(buf, DELIMITER); // first token
+		if (token[0]) { // zero if line is blank
+		  for (n = 1; n < MAX_TOKENS_PER_LINE; n++) {
+			token[n] = strtok(0, DELIMITER); // subsequent tokens
+			if (!token[n]) break; // no more tokens
+		  }
+		}
+
+		// process tokens
+		int num_of_surface_patches = 0;
+		for (int i = 0; i < n; i++) { // n = #of tokens
+			// This is the first line of the file that says the number of surface patches
+			if (n == 1) { num_of_surface_patches = (int) atof(token[i]);}
+			cout << "Number of Surface Patches = " << num_of_surface_patches << endl;
+			//if(strcmp(token[i], "cam") == 0)
+		}
+}
+}
 //****************************************************
 // the usual stuff, nothing exciting here
 //****************************************************
 int main(int argc, char *argv[]) {
 	// Parse input
 	int i = 0;
+	// Parse the bezier file or OBJ file
+	if(argc >= 2) {
+		parse_input(argv[1]);
 
-	for(int i = 0; i < argc; i++) {
-		if(strcmp(argv[i], "-ka") == 0) {
-			ka[0] = atof(argv[i+1]);
-			ka[1] = atof(argv[i+2]);
-			ka[2] = atof(argv[i+3]);
-			i = i + 3;
-		}
-		else if(strcmp(argv[i], "-kd") == 0) {
-			kd[0] = atof(argv[i+1]);
-			kd[1] = atof(argv[i+2]);
-			kd[2] = atof(argv[i+3]);
-			i = i + 3;
-		}
-		else if(strcmp(argv[i], "-ks") == 0) {
-			ks[0] = atof(argv[i+1]);
-			ks[1] = atof(argv[i+2]);
-			ks[2] = atof(argv[i+3]);
-			i = i + 3;
-		}
-		else if(strcmp(argv[i], "-sp") == 0) {
-			sp = atof(argv[i+1]);
-			i = i + 1;
-		}
 	}
+
+	// for(int i = 0; i < argc; i++) {
+
+	// 	// First argument is the file
+	// 	if(strcmp(argv[i], "-pt") == 0) {
+	// 		SurfacePatch sp = SurfacePatch();
+	// 		sp.control_points[0][0] = atof(argv[i+1]); sp.control_points[0][1] = atof(argv[i+2]); sp.control_points[0][2] = atof(argv[i+3]);  
+	// 		//temp.push_back(atof(argv[i+1])); temp.push_back(atof(argv[i+2])); temp.push_back(atof(argv[i+3]));
+	// 		//triangle.v1 = temp;
+	// 		cout << "I saved a Surface Patch" << endl;
+	// 		cout << "Surface Patch : (" << sp.control_points[0][0] << ", " << sp.control_points[0][1] << ", " << sp.control_points[0][2] << ")" << endl;
+	// 		i = i + 3;
+	// 	}
+	// }
 
   //This initializes glut
   glutInit(&argc, argv);
