@@ -408,8 +408,10 @@ void parse_input(const char* input_file) {
 		int num_of_surface_patches = 0;
 		for (int i = 0; i < n; i++) { // n = #of tokens
 			// This is the first line of the file that says the number of surface patches
-			if (n == 1) { num_of_surface_patches = (int) atof(token[i]);}
-			cout << "Number of Surface Patches = " << num_of_surface_patches << endl;
+			if (n == 1) { 
+				num_of_surface_patches = (int) atof(token[i]);
+				cout << "Number of Surface Patches = " << num_of_surface_patches << endl;
+			}
 			//if(strcmp(token[i], "cam") == 0)
 		}
 }
@@ -425,20 +427,10 @@ int main(int argc, char *argv[]) {
 		parse_input(argv[1]);
 
 	}
-
-	// for(int i = 0; i < argc; i++) {
-
-	// 	// First argument is the file
-	// 	if(strcmp(argv[i], "-pt") == 0) {
-	// 		SurfacePatch sp = SurfacePatch();
-	// 		sp.control_points[0][0] = atof(argv[i+1]); sp.control_points[0][1] = atof(argv[i+2]); sp.control_points[0][2] = atof(argv[i+3]);  
-	// 		//temp.push_back(atof(argv[i+1])); temp.push_back(atof(argv[i+2])); temp.push_back(atof(argv[i+3]));
-	// 		//triangle.v1 = temp;
-	// 		cout << "I saved a Surface Patch" << endl;
-	// 		cout << "Surface Patch : (" << sp.control_points[0][0] << ", " << sp.control_points[0][1] << ", " << sp.control_points[0][2] << ")" << endl;
-	// 		i = i + 3;
-	// 	}
-	// }
+	// Parse the other 2 values in the input
+	for(int i = 0; i < argc; i++) {
+		
+	}
 
   //This initializes glut
   glutInit(&argc, argv);
