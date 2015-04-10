@@ -54,6 +54,12 @@ Light::Light() {
 	pos.push_back(0.0); pos.push_back(0.0); pos.push_back(0.0);
 }
 
+class Triangle;
+
+class Triangle {
+	public:
+		vector<float> v1, v2, v3; // x
+};
 //****************************************************
 // Global Variables
 //****************************************************
