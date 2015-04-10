@@ -79,15 +79,32 @@ Triangle::Triangle(vector<float> iv1, vector<float> iv2, vector<float> iv3) {
 //****************************************************
 class SurfacePatch {
 	public:
-		SurfacePatch();
-		float control_points [4][4];
+		SurfacePatch(); 
+		void print();
+		vector<float> control_points [4][4];
 };
 
 SurfacePatch::SurfacePatch() {
 	for(int i = 0; i < 4; i++) {
 		for(int j = 0; j < 4; j++) {
-			control_points[i][j] = 0.0f;
+			vector<float> *item = new vector<float>();
+			control_points[i][j] = *item;
 		}
+	}
+}
+
+void SurfacePatch::print() {
+	cout << endl;
+	cout << "The Control Points: " << endl;
+	for (int i = 0; i < 4; i++) {
+		cout << "(" << control_points[i][0][0] << ", " << control_points[i][0][1] << ", " << control_points[i][0][2] << 
+			    ")";
+		cout << " ( " << control_points[i][1][0] << ", " << control_points[i][1][1] << ", " << control_points[i][1][2] << 
+			    ")";
+		cout << " (" << control_points[i][2][0] << ", " << control_points[i][2][1] << ", " << control_points[i][2][2] << 
+			    ")";
+		cout << " (" << control_points[i][3][0] << ", " << control_points[i][3][1] << ", " << control_points[i][3][2] << 
+			    ")" << endl;
 	}
 }
 
@@ -106,6 +123,13 @@ bool toonShader;
 
 vector<Light> pl_list; // list of point lights
 vector<Light> dl_list; // list of directional lights
+
+
+//List of all the Surface Patches
+vector<SurfacePatch> list_of_SPatches;
+bool isUniform = false;
+bool isAdaptive = false;
+float step_size = 0.0f;
 
 //****************************************************
 // Simple init function
@@ -382,7 +406,10 @@ void parse_input(const char* input_file) {
 	if (!fin.good()) { 
 		return; // exit if file not found
 	}
-
+	bool firstLine = false;
+	//Number of curves per surface patch
+	int num_curves = 0;
+	SurfacePatch sp = SurfacePatch();
 	 // read each line of the file
 	while (!fin.eof()) {
 		// read an entire line into memory
@@ -395,6 +422,9 @@ void parse_input(const char* input_file) {
 		// array to store memory addresses of the tokens in buf
 		const char* token[MAX_TOKENS_PER_LINE] = {}; // initialize to 0
     
+
+		int num_of_surface_patches = 0;
+
 		// parse the line
 		token[0] = strtok(buf, DELIMITER); // first token
 		if (token[0]) { // zero if line is blank
@@ -405,15 +435,28 @@ void parse_input(const char* input_file) {
 		}
 
 		// process tokens
-		int num_of_surface_patches = 0;
+
 		for (int i = 0; i < n; i++) { // n = #of tokens
-			// This is the first line of the file that says the number of surface patches
-			if (n == 1) { 
-				num_of_surface_patches = (int) atof(token[i]);
-				cout << "Number of Surface Patches = " << num_of_surface_patches << endl;
+			if (firstLine) {
+				if (num_curves == 0) {
+					sp = SurfacePatch();
+				}
+				vector<float> *pt1 = new vector<float>(); vector<float> *pt2 = new vector<float>(); 
+				vector<float> *pt3 = new vector<float>(); vector<float> *pt4 = new vector<float>(); 
+				pt1->push_back((float) atof(token[i++])); pt1->push_back((float) atof(token[i++])); pt1->push_back((float) atof(token[i++]));
+				pt2->push_back((float) atof(token[i++])); pt2->push_back((float) atof(token[i++])); pt2->push_back((float) atof(token[i++]));
+				pt3->push_back((float) atof(token[i++])); pt3->push_back((float) atof(token[i++])); pt3->push_back((float) atof(token[i++]));
+				pt4->push_back((float) atof(token[i++])); pt4->push_back((float) atof(token[i++])); pt4->push_back((float) atof(token[i++]));
+				sp.control_points[num_curves][0] = *pt1; sp.control_points[num_curves][1] = *pt2;
+				sp.control_points[num_curves][2] = *pt3; sp.control_points[num_curves][3] = *pt4;
+				num_curves++;
+				if (num_curves == 4) { 
+					num_curves = 0; list_of_SPatches.push_back(sp);
+					sp.print();
+				}
 			}
-			//if(strcmp(token[i], "cam") == 0)
 		}
+		firstLine = true;
 }
 }
 //****************************************************
@@ -427,11 +470,17 @@ int main(int argc, char *argv[]) {
 		parse_input(argv[1]);
 
 	}
-	// Parse the other 2 values in the input
-	for(int i = 0; i < argc; i++) {
-		
+	step_size = (float) atof(argv[2]);
+	if (argc == 4) {
+		if (strcmp(argv[3], "-a") == 0) {
+			isAdaptive = true;
+		}
+	} else {
+		isUniform = true;
 	}
 
+cout << "Adaptive status = " << isAdaptive << " Uniform Status = " << isUniform << endl;
+cout << "Step Size = " << step_size << endl;
   //This initializes glut
   glutInit(&argc, argv);
 
