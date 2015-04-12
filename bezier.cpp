@@ -73,6 +73,35 @@ Triangle::Triangle(vector<float> iv1, vector<float> iv2, vector<float> iv3) {
 	v1 = iv1; v2 = iv2; v3 = iv3;
 }
 
+//****************************************************
+// Curve Class
+//****************************************************
+class Curve {
+	public:
+		Curve();
+		vector<float> pt1;
+		vector<float> pt2;
+		vector<float> pt3;
+		vector<float> pt4;
+		void print();
+};
+
+Curve::Curve() {
+	pt1.push_back(0.0f); pt1.push_back(0.0f); pt1.push_back(0.0f);
+	pt2.push_back(0.0f); pt2.push_back(0.0f); pt2.push_back(0.0f);
+	pt3.push_back(0.0f); pt3.push_back(0.0f); pt3.push_back(0.0f);
+	pt4.push_back(0.0f); pt4.push_back(0.0f); pt4.push_back(0.0f);
+}
+
+void Curve::print() {
+	cout << "( " << pt1[0] << ", " << pt1[1] << ", " << pt1[2] << ") ";
+	cout << "( " << pt2[0] << ", " << pt2[1] << ", " << pt2[2] << ") ";
+	cout << "( " << pt3[0] << ", " << pt3[1] << ", " << pt3[2] << ") ";
+	cout << "( " << pt4[0] << ", " << pt4[1] << ", " << pt4[2] << ") ";
+	cout << endl;
+	
+}
+
 
 //****************************************************
 // Bezier Surface Patches
@@ -81,31 +110,33 @@ class SurfacePatch {
 	public:
 		SurfacePatch(); 
 		void print();
-		vector<float> control_points [4][4];
+		//Curve c1, c2, c3, c4;
+		vector<Curve> control_points;
 };
 
 SurfacePatch::SurfacePatch() {
 	for(int i = 0; i < 4; i++) {
-		for(int j = 0; j < 4; j++) {
-			vector<float> *item = new vector<float>();
-			control_points[i][j] = *item;
-		}
-	}
+		Curve *item = new Curve();
+		control_points.push_back(*item);	}
 }
 
 void SurfacePatch::print() {
 	cout << endl;
 	cout << "The Control Points: " << endl;
 	for (int i = 0; i < 4; i++) {
-		cout << "(" << control_points[i][0][0] << ", " << control_points[i][0][1] << ", " << control_points[i][0][2] << 
-			    ")";
-		cout << " ( " << control_points[i][1][0] << ", " << control_points[i][1][1] << ", " << control_points[i][1][2] << 
-			    ")";
-		cout << " (" << control_points[i][2][0] << ", " << control_points[i][2][1] << ", " << control_points[i][2][2] << 
-			    ")";
-		cout << " (" << control_points[i][3][0] << ", " << control_points[i][3][1] << ", " << control_points[i][3][2] << 
-			    ")" << endl;
+		control_points[i].print();
 	}
+}
+
+//****************************************************
+// Print overall
+//****************************************************
+void print(string mes) {
+	cout << mes << endl;
+}
+
+void print(string mes, int v) {
+	cout << mes << v << endl;
 }
 
 //****************************************************
@@ -380,6 +411,92 @@ void circle(float centerX, float centerY, float radius) {
 }
 
 //****************************************************
+//Uniform Subdisivion
+// Takes in step size and a surface patch
+//****************************************************
+void subdividePatch(SurfacePatch sp, float step) {
+	//compute how many subdivisions there # are for this step size
+	float epsilon = 1.0f; //BecauseI I don't know the real value
+	int numdiv = ((1 + epsilon) / step);
+	cout << "NumDiv = " << numdiv << endl;
+	//for each parametric value of u 
+	for (int iu = 0; iu < numdiv; iu++) {
+		float u = iu * step;
+		print("u = ", u);
+		// for each parametric value of v 
+		for (int iv = 0; iv < numdiv; iv++) {
+			float v = iv * step;
+			print("v", v);
+		// evaluate surface
+			float p, n;
+			//p, n = bezpatchinterp(sp, u, v);
+			//savesurfacepointandnormal(p,n)
+		}
+	}
+}
+
+//****************************************************
+//Uniform Subdisivion
+//given the control points of a bezier curve and a parametric value, 
+//return the curve point and derivative
+//****************************************************
+
+vector<float> bezcurveinterp(Curve curve, float u) {
+	// first, split each of the three segments # to form two new ones AB and BC
+	//A B and C are vectors with (x,y,z)
+	vector<float> A, B, C, D, E;
+	A[0] = curve.pt1[0] * (1.0-u) + curve.pt2[0] * u;
+	A[1] = curve.pt1[1] * (1.0-u) + curve.pt2[1] * u;
+	A[2] = curve.pt1[2] * (1.0-u) + curve.pt2[2] * u;
+	
+	B[0] = curve.pt2[0] * (1.0-u) + curve.pt3[0] * u;
+	B[1] = curve.pt2[1] * (1.0-u) + curve.pt3[1] * u;
+	B[2] = curve.pt2[2] * (1.0-u) + curve.pt3[2] * u;
+
+	C[0] = curve.pt3[0] * (1.0-u) + curve.pt4[0] * u;
+	C[1] = curve.pt3[1] * (1.0-u) + curve.pt4[1] * u;
+	C[2] = curve.pt3[2] * (1.0-u) + curve.pt4[2] * u;
+	// now, split AB and BC to form a new segment DE D = A * (1.0-u) + B * u
+	E[0] = B[0] * (1.0-u) + C[0] * u;
+	E[1] = B[1] * (1.0-u) + C[1] * u;
+	E[2] = B[2] * (1.0-u) + C[2] * u;
+	// finally, pick the right point on DE, # this is the point on the curve
+	vector<float> p, dPdu;
+	p[0] = D[0] * (1.0-u) + E[0] * u;
+	p[1] = D[1] * (1.0-u) + E[1] * u;
+	p[2] = D[2] * (1.0-u) + E[2] * u;
+	// compute derivative also 
+	dPdu[0] = 3 * (E[0] - D[0]);
+	dPdu[1] = 3 * (E[1] - D[1]);
+	dPdu[2] = 3 * (E[2] - D[2]);
+	return p, dPdu;
+}
+
+//****************************************************
+// Uniform Subdivision
+//***************************************************
+// given a control patch and (u,v) values, find # the surface point and normal 
+// vector<float> bezpatchinterp(patch, u, v) {
+// 	//# build control points for a Bezier curve in v 
+// 	// SurfacePatch
+// 	Curve vcurve, ucurve;
+// 	vcurve.pt1 = bezcurveinterp(patch[0][0:3], u); // sf have curves
+// 	vcurve.pt2 = bezcurveinterp(patch[1][0:3], u); 
+// 	vcurve.pt3 = bezcurveinterp(patch[2][0:3], u); 
+// 	vcurve.pt4 = bezcurveinterp(patch[3][0:3], u);
+// 	//build control points for a Bezier curve in u 
+// 	ucurve.pt1 = bezcurveinterp(patch[0:3][0], v);
+// 	ucurve.pt2 = bezcurveinterp(patch[0:3][1], v);
+// 	ucurve.pt3 = bezcurveinterp(patch[0:3][2], v);
+// 	ucurve.pt4 = bezcurveinterp(patch[0:3][3], v);
+// 	// evaluate surface and derivative for u and v 
+// 	p, dPdv = bezcurveinterp(vcurve, v)
+// 	p, dPdu = bezcurveinterp(ucurve, u)
+// 	# take cross product of partials to find normal n = cross(dPdu, dPdv)
+// 	n = n / length(n)
+// 	return p, n
+// }
+//****************************************************
 // function that does the actual drawing of stuff
 //***************************************************
 void myDisplay() {
@@ -410,6 +527,7 @@ void parse_input(const char* input_file) {
 	//Number of curves per surface patch
 	int num_curves = 0;
 	SurfacePatch sp = SurfacePatch();
+
 	 // read each line of the file
 	while (!fin.eof()) {
 		// read an entire line into memory
@@ -447,8 +565,10 @@ void parse_input(const char* input_file) {
 				pt2->push_back((float) atof(token[i++])); pt2->push_back((float) atof(token[i++])); pt2->push_back((float) atof(token[i++]));
 				pt3->push_back((float) atof(token[i++])); pt3->push_back((float) atof(token[i++])); pt3->push_back((float) atof(token[i++]));
 				pt4->push_back((float) atof(token[i++])); pt4->push_back((float) atof(token[i++])); pt4->push_back((float) atof(token[i++]));
-				sp.control_points[num_curves][0] = *pt1; sp.control_points[num_curves][1] = *pt2;
-				sp.control_points[num_curves][2] = *pt3; sp.control_points[num_curves][3] = *pt4;
+				Curve *c = new Curve();
+				c->pt1= *pt1; c->pt2 = *pt2; c->pt3 = *pt3; c->pt4 = *pt4; 
+				sp.control_points[num_curves] = *c; //[0] = *pt1; sp.control_points[num_curves][1] = *pt2;
+				//sp.control_points[num_curves][2] = *pt3; sp.control_points[num_curves][3] = *pt4;
 				num_curves++;
 				if (num_curves == 4) { 
 					num_curves = 0; list_of_SPatches.push_back(sp);
@@ -479,8 +599,17 @@ int main(int argc, char *argv[]) {
 		isUniform = true;
 	}
 
-cout << "Adaptive status = " << isAdaptive << " Uniform Status = " << isUniform << endl;
-cout << "Step Size = " << step_size << endl;
+	cout << "Adaptive status = " << isAdaptive << " Uniform Status = " << isUniform << endl;
+	cout << "Step Size = " << step_size << endl;
+
+	// Given a patch preform uniform subdisision
+	for (int i = 0; i < list_of_SPatches.size(); i++) {
+		if (isUniform) {
+			subdividePatch(list_of_SPatches[i], step_size);
+		}
+		//subdivide each patch
+	}
+
   //This initializes glut
   glutInit(&argc, argv);
 
