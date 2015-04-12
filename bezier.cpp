@@ -55,12 +55,19 @@ int windowID;
 
 //List of all the Surface Patches
 vector<SurfacePatch> list_of_SPatches;
+vector<Vector> points_to_Render;
 bool isUniform = false;
 bool isAdaptive = false;
 float step_size = 0.0f;
+//The number of divisions per side pf surface patch
+int numSubdivisions = 0;
 
 
-void initScene(){ }
+void initScene(){ 
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear to black, fully transparent
+
+  //myReshape(viewport.w,viewport.h);
+}
 
 /*Resizes Viewport.*/
 void myReshape(int w, int h) {
@@ -70,7 +77,8 @@ void myReshape(int w, int h) {
   glViewport (0,0,viewport.w,viewport.h);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluOrtho2D(0, viewport.w, 0, viewport.h);
+  // gluOrtho2D(0, viewport.w, 0, viewport.h);
+ glOrtho(-5, 5, -5, 5, 5, -5);
 
 }
 
@@ -98,50 +106,56 @@ void setPixel(int x, int y, GLfloat r, GLfloat g, GLfloat b) {
   // bug on inst machines.
 }
 
+void triangle(Vector v1, Vector v2, Vector v3) {
+	v1.print(); v2.print(); v3.print(); print("");
+	glBegin(GL_TRIANGLES);
+	glColor3f(1.0f, 0.0f, 0.0f);
+	glVertex3f(v1.x, v1.y, v1.z);
+	glVertex3f(v2.x, v2.y, v2.z);
+	glVertex3f(v3.x, v3.y, v3.z);
+	glEnd();
+}
+
 /*Uniform Subdivision.*/
 Vector bezcurveinterp(Curve curve, float u) {
 	// first, split each of the three segments # to form two new ones AB and BC
 	//A B and C are vectors with (x,y,z)
 	print("bezcurveinterp");
-	Vector A, B, C, D, E = Vector();
+	Vector A, B, C, D, E, temp1, temp2 = Vector();
 	curve.print();
-
-	A = (curve.pt1 * (1.0-u)) + (curve.pt2 * u);
-	print("A = "); A.print();
-	// A.x = curve.pt1.x * (1.0-u) + curve.pt2.x * u;
-	// A.y = curve.pt1.y * (1.0-u) + curve.pt2.y * u;
-	// A.z = curve.pt1.z * (1.0-u) + curve.pt2.z * u;
-	// print("A = "); print(A);
-	// B.x = curve.pt2.x * (1.0-u) + curve.pt3.x * u;
-	// B.y = curve.pt2.y * (1.0-u) + curve.pt3.y * u;
-	// B.z = curve.pt2.z * (1.0-u) + curve.pt3.z * u;
-	B = (curve.pt2 * (1.0-u)) + (curve.pt3 * u);
 	
+	//A = curve[0] * (1.0-u) + curve[1] * u
+	temp1.scalar_multiply(curve.pt1, (1.0-u)); temp2.scalar_multiply(curve.pt2, u);
+	A.add(temp1, temp2);
+	print("A = "); A.print();
+
+	// B = curve[1] * (1.0-u) + curve[2] * u
+	temp1.scalar_multiply(curve.pt2, (1.0-u)); temp2.scalar_multiply(curve.pt3, u);
+	B.add(temp1, temp2);
 	print("B = "); B.print();
 
-	C = (curve.pt3 * (1.0-u)) + (curve.pt4 * u);
+	// C = curve[2] * (1.0-u) + curve[3] * u
+	temp1.scalar_multiply(curve.pt3, (1.0-u)); temp2.scalar_multiply(curve.pt4, u);
+	C.add(temp1, temp2);
 	print("C = "); C.print();
-	// print("B = "); print(B);
-	// C.x = curve.pt3.x * (1.0-u) + curve.pt4.x * u;
-	// C.y = curve.pt3.y * (1.0-u) + curve.pt4.y * u;
-	// C.z = curve.pt3.z * (1.0-u) + curve.pt4.z * u;
+	
 	
 	// now, split AB and BC to form a new segment DE 
-	// D.x = A.x * (1.0-u) + B.x * u;
-	// D.y = A.y * (1.0-u) + B.y * u;
-	// D.z = A.z * (1.0-u) + B.z * u;
-	// print("D = "); print(D);
+	// D = A * (1.0-u) + B * u
+	temp1.scalar_multiply(A, (1.0-u)); temp2.scalar_multiply(B, u);
+	D.add(temp1, temp2);
+	print("D = "); D.print();
 
-	// E.x = B.x * (1.0-u) + C.x * u;
-	// E.y = B.y * (1.0-u) + C.y * u;
-	// E.z = B.z * (1.0-u) + C.z * u;
-	// print("E ="); print(E);
+	temp1.scalar_multiply(B, (1.0-u)); temp2.scalar_multiply(C, u);
+	E.add(temp1, temp2);
+	print("E ="); E.print();
+	
+
 	// finally, pick the right point on DE, # this is the point on the curve
-	Vector p, dPdu;
-	// dPdu.push_back(0.0f); dPdu.push_back(0.0f); dPdu.push_back(0.0f);
-	// p.x = D.x * (1.0-u) + E.x * u;
-	// py = Dy * (1.0-u) + Ey * u;
-	// p.z = D.z * (1.0-u) + E.z * u;
+	Vector p, dPdu;	
+	temp1.scalar_multiply(D, (1.0-u)); temp2.scalar_multiply(E, u);
+	p.add(temp1, temp2);
+	print("p = "); p.print();
 	// // compute derivative also 
 	// dPdu[0] = 3 * (E[0] - D[0]);
 	// dPdu[1] = 3 * (E[1] - D[1]);
@@ -154,6 +168,9 @@ Vector bezcurveinterp(Curve curve, float u) {
 Vector bezpatchinterp(SurfacePatch patch, float u, float v) {
 	//# build control points for a Bezier curve in v 
 	print("bezpatchinterp");
+	print("The Surface Patch"); patch.print();
+	print("VCurves"); patch.vcurves[0].print(); patch.vcurves[1].print();
+	patch.vcurves[2].print(); patch.vcurves[3].print();
 	// SurfacePatch
 	Curve vcurve, ucurve;
 	vcurve.pt1 = bezcurveinterp(patch.vcurves[0], u);
@@ -177,11 +194,18 @@ Vector bezpatchinterp(SurfacePatch patch, float u, float v) {
 	// n = n / length(n);
 	return p;
 }
+
+/* Saves the point in structure to be converted to triangles then rendered.*/
+void savesurfacepointandnormal(Vector p) {
+	points_to_Render.push_back(p);
+}
+
 /*Uniform Subdivision.*/
 void subdividePatch(SurfacePatch sp, float step) {
 	//compute how many subdivisions there # are for this step size
-	float epsilon = 1.0f; //BecauseI I don't know the real value
+	float epsilon = 0.80f; //BecauseI I don't know the real value
 	int numdiv = ((1 + epsilon) / step);
+	numSubdivisions = numdiv;
 	cout << "NumDiv = " << numdiv << endl;
 	//for each parametric value of u 
 	for (int iu = 0; iu < numdiv; iu++) {
@@ -195,7 +219,7 @@ void subdividePatch(SurfacePatch sp, float step) {
 			Vector p = Vector();
 			Vector n = Vector();
 			p = bezpatchinterp(sp, u, v);
-			//savesurfacepointandnormal(p,n)
+			savesurfacepointandnormal(p);
 		}
 	}
 }
@@ -207,8 +231,15 @@ void myDisplay() {
 	glLoadIdentity();
 
  	// /* Draws the triangles.*/
+ 	triangle(points_to_Render[0], points_to_Render[1], points_to_Render[numSubdivisions]);
  	// circle(viewport.w / 2.0 , viewport.h / 2.0 , min(viewport.w, viewport.h) / 2.05);
- 
+  //  glColor3f(1.0f,0.0f,0.0f);                   // setting the color to pure red 90% for the rect   
+  // glBegin(GL_POLYGON);
+  // glVertex3f(-1.0f, -1.0f, 0.0f);               // bottom left corner of rectangle
+  // glVertex3f(-1.0f, 1.0f, 0.0f);               // top left corner of rectangle
+  // glVertex3f( -0.9f, 1.0f, 0.0f);               // top right corner of rectangle
+  // glVertex3f( -0.9f, -1.0f, 0.0f);               // bottom right corner of rectangle
+  // glEnd();
 	glFlush();
 	glutSwapBuffers();					// swap buffers (we earlier set double buffer)
 }
@@ -310,14 +341,14 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < list_of_SPatches.size(); i++) {
 		print("Number of patches = ", list_of_SPatches.size());
 		if (isUniform) {
-			SurfacePatch sp = list_of_SPatches[i];
-			print("Patch to be subdivided");
-			sp.print(); sp.makeCurves();
+			list_of_SPatches[i].print(); list_of_SPatches[i].makeCurves();
 			subdividePatch(list_of_SPatches[i], step_size);
 		}
 		//subdivide each patch
 	}
 
+	print("Number of points to render = ", points_to_Render.size());
+	print("Number of subdivisions = ", numSubdivisions);
   //This initializes glut
   glutInit(&argc, argv);
 
@@ -341,7 +372,7 @@ int main(int argc, char *argv[]) {
 
   glutMainLoop();							// infinite loop that will keep drawing and resizing
   // and whatever else
-
+ 	return 0;
 }
 
 
