@@ -55,7 +55,8 @@ int windowID;
 
 //List of all the Surface Patches
 vector<SurfacePatch> list_of_SPatches;
-vector<Vector> points_to_Render;
+vector<vector<Vector> > points_to_Render;
+vector<Vector> curlevel;
 bool isUniform = false;
 bool isAdaptive = false;
 float step_size = 0.0f;
@@ -197,7 +198,12 @@ Vector bezpatchinterp(SurfacePatch patch, float u, float v) {
 
 /* Saves the point in structure to be converted to triangles then rendered.*/
 void savesurfacepointandnormal(Vector p) {
-	points_to_Render.push_back(p);
+	if (curlevel.size() == numSubdivisions) {
+		points_to_Render.push_back(curlevel);
+		curlevel = vector<Vector>();
+	}
+	curlevel.push_back(p);
+	// points_to_Render.push_back(p);
 }
 
 /*Uniform Subdivision.*/
@@ -231,7 +237,14 @@ void myDisplay() {
 	glLoadIdentity();
 
  	// /* Draws the triangles.*/
- 	triangle(points_to_Render[0], points_to_Render[1], points_to_Render[numSubdivisions]);
+ 	for (int i = 0; i < numSubdivisions - 1; i++) {
+ 		for (int j = 0; j < numSubdivisions - 1; j++) {
+ 		triangle(points_to_Render[i][j], points_to_Render[i][j+1], 
+ 		                points_to_Render[i+1][j]);
+ 		triangle(points_to_Render[i+1][j], points_to_Render[i][j+1],
+ 						points_to_Render[i+1][j+1]);
+ 		}
+ 	}
  	// circle(viewport.w / 2.0 , viewport.h / 2.0 , min(viewport.w, viewport.h) / 2.05);
   //  glColor3f(1.0f,0.0f,0.0f);                   // setting the color to pure red 90% for the rect   
   // glBegin(GL_POLYGON);
