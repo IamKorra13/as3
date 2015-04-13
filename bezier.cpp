@@ -23,6 +23,7 @@
 
 #include <time.h>
 #include <math.h>
+#include <cfloat>
 
 #include "triangle.cpp"
 #include "curve.cpp"
@@ -51,6 +52,8 @@ vector<Vector> curlevel;
 bool isUniform = false;
 bool isAdaptive = false;
 float step_size = 0.0f;
+bool changeColor = false;
+//The number of divisions per side pf surface patch
 int numSubdivisions = 0;
 
 
@@ -68,11 +71,10 @@ void myReshape(int w, int h) {
   glViewport (0,0,viewport.w,viewport.h);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  // gluOrtho2D(0, viewport.w, 0, viewport.h);
- glOrtho(-5, 5, -5, 5, 5, -5);
+  // gluOrtho2D(10, viewport.w, 10, viewport.h);
+ glOrtho(-4, 4, -4, 4, 4, -4);
 
 }
-
 
 /*Exits on Spacebar.*/
  void keyBoardFunc(unsigned char key, int x, int y) {  
@@ -87,14 +89,17 @@ void myReshape(int w, int h) {
   }
 }
 
-
-void drawTriangle(Triangle triangle) {
-    Vector v1 = triangle.v1; Vector v2 = triangle.v2; Vector v3 = triangle.v3;
-    
-    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+void triangle(Triangle tri) {
+	Vector v1, v2, v3;
+	v1 = tri.v1;
+	v2 = tri.v2;
+	v3 = tri.v3;
 	glBegin(GL_TRIANGLES);
-    
-	glColor3f(1.0f, 0.0f, 0.0f);
+	if (!changeColor) {
+		glColor3f(0.4f, 0.6f, 0.7f);
+	} else {
+		glColor3f(1.0f, 0.0f, 0.0f);
+	}
 	glVertex3f(v1.x, v1.y, v1.z);
 	glVertex3f(v2.x, v2.y, v2.z);
 	glVertex3f(v3.x, v3.y, v3.z);
@@ -106,6 +111,17 @@ void drawTriangle(Triangle triangle) {
 
 
 /****** Bezier Functions *******/
+void wireframe(Vector v1, Vector v2) {
+	glLineWidth(2.5); 
+	glColor3f(1.0, 1.0, 1.0);
+	glBegin(GL_LINES);
+	glVertex3f(v1.x, v1.y, v1.z);
+	glVertex3f(v2.x, v2.y, v2.z);
+	glEnd();
+
+}
+
+/*Uniform Subdivision.*/
 vector<Vector> bezcurveinterp(Curve curve, float u) {
 	// first, split each of the three segments # to form two new ones AB and BC
 	//A B and C are vectors with (x,y,z)
@@ -180,6 +196,20 @@ vector<Vector> bezpatchinterp(SurfacePatch patch, float u, float v) {
 	return newResult;
 }
 
+void makeTriangles() {
+	for (int i = 0; i < numSubdivisions; i++) {
+ 		for (int j = 0; j < numSubdivisions; j++) {
+ 			Triangle triangle1 = Triangle(points_to_render[i][j], points_to_render[i][j+1],
+	 		                points_to_render[i+1][j]);
+	 		Triangle triangle2 = Triangle(points_to_render[i+1][j], points_to_render[i][j+1],
+	 						points_to_render[i+1][j+1]);
+ 			list_triangles.push_back(triangle1); list_triangles.push_back(triangle2);
+ 		}
+ 	}
+ 	//reset all the lists
+ 	points_to_render = vector<vector<Vector> >(); curlevel = vector<Vector>();
+}
+
 /* Saves the point in structure to be converted to triangles then rendered.*/
 void savesurfacepointandnormal(Vector p) {
 	if (curlevel.size() == numSubdivisions + 1) {
@@ -195,14 +225,15 @@ void subdividePatch(SurfacePatch sp, float step) {
 	//compute how many subdivisions there # are for this step size
 	float epsilon = 0.05f; //BecauseI I don't know the real value
 	int numdiv = ((1 + epsilon) / step);
+    
 	numSubdivisions = numdiv;
     
-	//for each parametric value of u 
-	for (int iu = 0; iu <= numdiv; iu++) {
+	//for each parametric value of u
+	for (int iu = 0; iu < numdiv + 1; iu++) {
 		float u = iu * step;
         
-		// for each parametric value of v 
-		for (int iv = 0; iv <= numdiv; iv++) {
+		// for each parametric value of v
+		for (int iv = 0; iv < numdiv + 1; iv++) {
 			float v = iv * step;
             
             // evaluate surface
@@ -222,16 +253,17 @@ void subdividePatch(SurfacePatch sp, float step) {
 
 /*Draws.*/
 void myDisplay() {
-	glClear(GL_COLOR_BUFFER_BIT);				// clear the color buffer
+	glClear(GL_COLOR_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);				// clear the color buffer
 	glMatrixMode(GL_MODELVIEW);			        // indicate we are specifying camera transformations
 	glLoadIdentity();
 
- 	// /* Draws the triangles.*/
+ 	/* Draws the triangles.*/
  	for (int i = 0; i < list_triangles.size(); i++) {
- 		drawTriangle(list_triangles[i]);
+ 		if (i == 3) { changeColor = true;}
+ 		Triangle tri = list_triangles[i];
+ 		triangle(tri);
  	}
-    
-  // glEnd();
 	glFlush();
 	glutSwapBuffers();					// swap buffers (we earlier set double buffer)
 }
@@ -388,7 +420,6 @@ int main(int argc, char *argv[]) {
   windowID = glutCreateWindow(argv[0]);  // saving the ID of the window possibly for quiting on spacebar
 
   initScene();							// quick function to set up scene
-//glPolygonMode(GL_FRONT, GL_LINE);
   glutDisplayFunc(myDisplay);				// function to run when its time to draw something
   glutReshapeFunc(myReshape);       // function to run when the window gets resized
   glutKeyboardFunc(keyBoardFunc);		// function to run to exit window with spacebar		

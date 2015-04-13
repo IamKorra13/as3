@@ -12,7 +12,7 @@ class Triangle {
 		Triangle();
 		Triangle(Vector, Vector, Vector);
 		Vector v1, v2, v3, normal;
-        void print();
+		void print();
 };
 
 Triangle::Triangle() {
