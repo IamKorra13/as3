@@ -23,6 +23,7 @@
 
 #include <time.h>
 #include <math.h>
+#include <cfloat>
 
 #include "triangle.cpp"
 #include "curve.cpp"
@@ -54,12 +55,14 @@ Viewport	viewport;
 int windowID;
 
 //List of all the Surface Patches
+vector<Triangle> list_triangles;
 vector<SurfacePatch> list_of_SPatches;
 vector<vector<Vector> > points_to_Render;
 vector<Vector> curlevel;
 bool isUniform = false;
 bool isAdaptive = false;
 float step_size = 0.0f;
+bool changeColor = false;
 //The number of divisions per side pf surface patch
 int numSubdivisions = 0;
 
@@ -78,15 +81,15 @@ void myReshape(int w, int h) {
   glViewport (0,0,viewport.w,viewport.h);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  // gluOrtho2D(0, viewport.w, 0, viewport.h);
- glOrtho(-5, 5, -5, 5, 5, -5);
+  // gluOrtho2D(10, viewport.w, 10, viewport.h);
+ glOrtho(-4, 4, -4, 4, 4, -4);
 
 }
 
-// void phong_shading(float N) {
+void phong_shading(float N) {
 // 	//the light vector
 // 	Vector L = Vector();
-
+	float i = 0.0f;
 // 	If = Ia + Id + Is
 // 	Ia = (Al * Am) + (As * Am)
 
@@ -121,7 +124,7 @@ void myReshape(int w, int h) {
 
 // 	float f = 60.0f;
 // 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, f );
-// }
+}
 
 /*Exits on Spacebar.*/
  void keyBoardFunc(unsigned char key, int x, int y) {  
@@ -164,14 +167,31 @@ void setPixel(int x, int y, GLfloat r, GLfloat g, GLfloat b) {
   // bug on inst machines.
 }
 
-void triangle(Vector v1, Vector v2, Vector v3) {
-	// v1.print(); v2.print(); v3.print(); print("");
+void triangle(Triangle tri) {
+	Vector v1, v2, v3;
+	v1 = tri.v1;
+	v2 = tri.v2;
+	v3 = tri.v3;
 	glBegin(GL_TRIANGLES);
-	glColor3f(1.0f, 0.0f, 0.0f);
+	if (!changeColor) {
+		glColor3f(0.4f, 0.6f, 0.7f);
+	} else {
+		glColor3f(1.0f, 0.0f, 0.0f);
+	}
 	glVertex3f(v1.x, v1.y, v1.z);
 	glVertex3f(v2.x, v2.y, v2.z);
 	glVertex3f(v3.x, v3.y, v3.z);
 	glEnd();
+}
+
+void wireframe(Vector v1, Vector v2) {
+	glLineWidth(2.5); 
+	glColor3f(1.0, 1.0, 1.0);
+	glBegin(GL_LINES);
+	glVertex3f(v1.x, v1.y, v1.z);
+	glVertex3f(v2.x, v2.y, v2.z);
+	glEnd();
+
 }
 
 /*Uniform Subdivision.*/
@@ -274,29 +294,45 @@ vector<Vector> bezpatchinterp(SurfacePatch patch, float u, float v) {
 	return newResult;
 }
 
+void makeTriangles() {
+	for (int i = 0; i < numSubdivisions; i++) {
+ 		for (int j = 0; j < numSubdivisions; j++) {	
+ 			print("Making Triangles");
+ 			Triangle triangle1 = Triangle(points_to_Render[i][j], points_to_Render[i][j+1], 
+	 		                points_to_Render[i+1][j]);
+	 		Triangle triangle2 = Triangle(points_to_Render[i+1][j], points_to_Render[i][j+1],
+	 						points_to_Render[i+1][j+1]);
+ 			list_triangles.push_back(triangle1); list_triangles.push_back(triangle2);
+ 		}
+ 	}
+ 	//reset all the lists
+ 	points_to_Render = vector<vector<Vector> >(); curlevel = vector<Vector>();
+}
+
 /* Saves the point in structure to be converted to triangles then rendered.*/
 void savesurfacepointandnormal(Vector p) {
-	if (curlevel.size() == numSubdivisions) {
+	if (curlevel.size() == numSubdivisions + 1) {
+		print("Finished the Level ");
 		points_to_Render.push_back(curlevel);
 		curlevel = vector<Vector>();
 	}
 	curlevel.push_back(p);
-	// points_to_Render.push_back(p);
+	print("I just pushed back THIS point"); p.print(); cout << endl;
 }
 
 /*Uniform Subdivision.*/
 void subdividePatch(SurfacePatch sp, float step) {
 	//compute how many subdivisions there # are for this step size
-	float epsilon = 0.80f; //BecauseI I don't know the real value
-	int numdiv = ((1 + epsilon) / step);
+	//BecauseI I don't know the real value
+	int numdiv = ((1 + FLT_EPSILON) / step);
 	numSubdivisions = numdiv;
 	// cout << "NumDiv = " << numdiv << endl;
 	//for each parametric value of u 
-	for (int iu = 0; iu < numdiv; iu++) {
+	for (int iu = 0; iu < numdiv + 1; iu++) {
 		float u = iu * step;
 		// print("u = ", u);
 		// for each parametric value of v 
-		for (int iv = 0; iv < numdiv; iv++) {
+		for (int iv = 0; iv < numdiv + 1; iv++) {
 			float v = iv * step;
 			// print("v = ", v);
 		// evaluate surface
@@ -315,27 +351,20 @@ void subdividePatch(SurfacePatch sp, float step) {
 
 /*Draws.*/
 void myDisplay() {
-	glClear(GL_COLOR_BUFFER_BIT);				// clear the color buffer
+	glClear(GL_COLOR_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);				// clear the color buffer
 	glMatrixMode(GL_MODELVIEW);			        // indicate we are specifying camera transformations
 	glLoadIdentity();
+	print("All ma points");
 
- 	// /* Draws the triangles.*/
- 	for (int i = 0; i < numSubdivisions - 1; i++) {
- 		for (int j = 0; j < numSubdivisions - 1; j++) {
- 		triangle(points_to_Render[i][j], points_to_Render[i][j+1], 
- 		                points_to_Render[i+1][j]);
- 		triangle(points_to_Render[i+1][j], points_to_Render[i][j+1],
- 						points_to_Render[i+1][j+1]);
- 		}
+ 	/* Draws the triangles.*/
+ 	for (int i = 0; i < list_triangles.size(); i++) {
+ 		if (i == 3) { changeColor = true;}
+ 		Triangle tri = list_triangles[i];
+ 		cout << i+1 << " "; tri.print(); print("");
+ 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+ 		triangle(tri);
  	}
- 	// circle(viewport.w / 2.0 , viewport.h / 2.0 , min(viewport.w, viewport.h) / 2.05);
-  //  glColor3f(1.0f,0.0f,0.0f);                   // setting the color to pure red 90% for the rect   
-  // glBegin(GL_POLYGON);
-  // glVertex3f(-1.0f, -1.0f, 0.0f);               // bottom left corner of rectangle
-  // glVertex3f(-1.0f, 1.0f, 0.0f);               // top left corner of rectangle
-  // glVertex3f( -0.9f, 1.0f, 0.0f);               // top right corner of rectangle
-  // glVertex3f( -0.9f, -1.0f, 0.0f);               // bottom right corner of rectangle
-  // glEnd();
 	glFlush();
 	glutSwapBuffers();					// swap buffers (we earlier set double buffer)
 }
@@ -439,12 +468,20 @@ int main(int argc, char *argv[]) {
 		if (isUniform) {
 			// list_of_SPatches[i].print(); 
 			list_of_SPatches[i].makeCurves();
+			print("Number of Patches = ", list_of_SPatches.size());
+			list_of_SPatches[i].print();
+
 			subdividePatch(list_of_SPatches[i], step_size);
+
+			points_to_Render.push_back(curlevel);
+			makeTriangles();
 		}
 		//subdivide each patch
 	}
-
-	print("Number of points to render = ", points_to_Render.size());
+ // Push back the last level
+	print("Number of rows x = ", points_to_Render.size());
+	// print("Number of rows y = ", points_to_Render[.size());
+	print("Number of points = ", curlevel.size());
 	print("Number of subdivisions = ", numSubdivisions);
   //This initializes glut
   glutInit(&argc, argv);
@@ -462,7 +499,7 @@ int main(int argc, char *argv[]) {
   windowID = glutCreateWindow(argv[0]);  // saving the ID of the window possibly for quiting on spacebar
 
   initScene();							// quick function to set up scene
-
+  print("Right before my display");
   glutDisplayFunc(myDisplay);				// function to run when its time to draw something
   glutReshapeFunc(myReshape);       // function to run when the window gets resized
   glutKeyboardFunc(keyBoardFunc);		// function to run to exit window with spacebar		
