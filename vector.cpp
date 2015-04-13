@@ -3,13 +3,16 @@ Vector::Vector() {
 	x = 0;
 	y = 0;
 	z = 0;
-	w = 0;
+	normal.push_back(0.0f); normal.push_back(0.0f); 
+	normal.push_back(0.0f);
 }
 
 Vector::Vector(int ix, int iy, int iz) {
 	x = (float) ix;
 	y = (float) iy;
 	z = (float) iz;
+	normal.push_back(0.0f); normal.push_back(0.0f); 
+	normal.push_back(0.0f);
 	w = 0.0f;
 }
 
@@ -17,6 +20,8 @@ Vector::Vector(float ix, float iy, float iz) {
 	x = ix;
 	y = iy;
 	z = iz;
+	normal.push_back(0.0f); normal.push_back(0.0f); 
+	normal.push_back(0.0f);
 	w = 0.0f;
 }
 
@@ -110,8 +115,16 @@ void Vector::normalize() {
 	}
 }
 
+void Vector::makeNormal(Vector n) {
+	normal[0] = n.x; normal[1] = n.y; normal[2] = n.z;
+}
+
 float Vector::dot_product(Vector v) {
 	return x * v.x + y * v.y + z * v.z;
+}
+
+Vector Vector::cross_product(Vector v) {
+	return Vector(y*v.z - z*v.y, z*v.x - x*v.z, x*v.y - y*v.x);
 }
 
 void Vector::print() {

@@ -83,6 +83,46 @@ void myReshape(int w, int h) {
 
 }
 
+// void phong_shading(float N) {
+// 	//the light vector
+// 	Vector L = Vector();
+
+// 	If = Ia + Id + Is
+// 	Ia = (Al * Am) + (As * Am)
+
+// 	float As[4] = {0.1f, 0.1f, 0.1f, 1.0f };
+// 	glLightModelfv( GL_LIGHT_MODEL_AMBIENT, As );
+
+// 	Id = Dl * Dm * LambertTerm
+// 	LambertTerm = dot(N, L)
+
+// 	Is = Sm x Sl x pow( max(R dot E, 0.0), f )
+// 	R = reflect(-L, N)
+// 	R = 2 * ( N dot L) * N - L
+// 	//Light Color
+// 	float Al[4] = {0.0f, 0.0f, 0.0f, 1.0f };
+// 	glLightfv( GL_LIGHT0, GL_AMBIENT, Al );	
+
+// 	float Dl[4] = {1.0f, 1.0f, 1.0f, 1.0f };
+// 	glLightfv( GL_LIGHT0, GL_DIFFUSE, Dl );	
+
+// 	float Sl[4] = {1.0f, 1.0f, 1.0f, 1.0f };
+// 	glLightfv( GL_LIGHT0, GL_SPECULAR, Sl );
+
+// 	//Material color
+// 	float Am[4] = {0.3f, 0.3f, 0.3f, 1.0f };
+// 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, Am );
+
+// 	float Dm[4] = {0.9f, 0.5f, 0.5f, 1.0f };
+// 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, Dm );
+
+// 	float Sm[4] = {0.6f, 0.6f, 0.6f, 1.0f };
+// 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, Sm );
+
+// 	float f = 60.0f;
+// 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, f );
+// }
+
 /*Exits on Spacebar.*/
  void keyBoardFunc(unsigned char key, int x, int y) {  
  // the x and y ar the position of the mouse on the window when the key is pressed?
@@ -97,7 +137,24 @@ void myReshape(int w, int h) {
   }
 }
 
-
+//For the move tool
+void processSpecialKeys(int key, int x, int y) {
+	float red, blue, green;
+	switch(key) {
+		case GLUT_KEY_F1 :
+				red = 1.0;
+				green = 0.0;
+				blue = 0.0; break;
+		case GLUT_KEY_F2 :
+				red = 0.0;
+				green = 1.0;
+				blue = 0.0; break;
+		case GLUT_KEY_F3 :
+				red = 0.0;
+				green = 0.0;
+				blue = 1.0; break;
+	}
+}
 void setPixel(int x, int y, GLfloat r, GLfloat g, GLfloat b) {
   //So we can add the changes here for caclulating the color of the pixel maybe
   glColor3f(r, g, b);
@@ -108,7 +165,7 @@ void setPixel(int x, int y, GLfloat r, GLfloat g, GLfloat b) {
 }
 
 void triangle(Vector v1, Vector v2, Vector v3) {
-	v1.print(); v2.print(); v3.print(); print("");
+	// v1.print(); v2.print(); v3.print(); print("");
 	glBegin(GL_TRIANGLES);
 	glColor3f(1.0f, 0.0f, 0.0f);
 	glVertex3f(v1.x, v1.y, v1.z);
@@ -118,82 +175,103 @@ void triangle(Vector v1, Vector v2, Vector v3) {
 }
 
 /*Uniform Subdivision.*/
-Vector bezcurveinterp(Curve curve, float u) {
+vector<Vector> bezcurveinterp(Curve curve, float u) {
 	// first, split each of the three segments # to form two new ones AB and BC
 	//A B and C are vectors with (x,y,z)
-	print("bezcurveinterp");
+	// print("bezcurveinterp");
 	Vector A, B, C, D, E, temp1, temp2 = Vector();
-	curve.print();
+	// curve.print();
 	
 	//A = curve[0] * (1.0-u) + curve[1] * u
 	temp1.scalar_multiply(curve.pt1, (1.0-u)); temp2.scalar_multiply(curve.pt2, u);
 	A.add(temp1, temp2);
-	print("A = "); A.print();
+	// print("A = "); A.print();
 
 	// B = curve[1] * (1.0-u) + curve[2] * u
 	temp1.scalar_multiply(curve.pt2, (1.0-u)); temp2.scalar_multiply(curve.pt3, u);
 	B.add(temp1, temp2);
-	print("B = "); B.print();
+	// print("B = "); B.print();
 
 	// C = curve[2] * (1.0-u) + curve[3] * u
 	temp1.scalar_multiply(curve.pt3, (1.0-u)); temp2.scalar_multiply(curve.pt4, u);
 	C.add(temp1, temp2);
-	print("C = "); C.print();
+	// print("C = "); C.print();
 	
 	
 	// now, split AB and BC to form a new segment DE 
 	// D = A * (1.0-u) + B * u
 	temp1.scalar_multiply(A, (1.0-u)); temp2.scalar_multiply(B, u);
 	D.add(temp1, temp2);
-	print("D = "); D.print();
+	// print("D = "); D.print();
 
 	temp1.scalar_multiply(B, (1.0-u)); temp2.scalar_multiply(C, u);
 	E.add(temp1, temp2);
-	print("E ="); E.print();
+	// print("E ="); E.print();
 	
 
 	// finally, pick the right point on DE, # this is the point on the curve
 	Vector p, dPdu;	
 	temp1.scalar_multiply(D, (1.0-u)); temp2.scalar_multiply(E, u);
 	p.add(temp1, temp2);
-	print("p = "); p.print();
+	// print("p = "); p.print();
+
 	// // compute derivative also 
 	// dPdu[0] = 3 * (E[0] - D[0]);
 	// dPdu[1] = 3 * (E[1] - D[1]);
 	// dPdu[2] = 3 * (E[2] - D[2]);
-	return p;
+	temp1.subtract(E, D); dPdu.scalar_multiply(temp1, 3);
+	vector<Vector> result;
+	result.push_back(p); result.push_back(dPdu);
+	return result;
 }
 
 /* Uniform Subdivision.*/
 // // given a control patch and (u,v) values, find # the surface point and normal 
-Vector bezpatchinterp(SurfacePatch patch, float u, float v) {
+vector<Vector> bezpatchinterp(SurfacePatch patch, float u, float v) {
 	//# build control points for a Bezier curve in v 
-	print("bezpatchinterp");
-	print("The Surface Patch"); patch.print();
-	print("VCurves"); patch.vcurves[0].print(); patch.vcurves[1].print();
-	patch.vcurves[2].print(); patch.vcurves[3].print();
+	// print("bezpatchinterp");
+	// print("The Surface Patch"); patch.print();
+	// print("VCurves"); patch.vcurves[0].print(); patch.vcurves[1].print();
+	// patch.vcurves[2].print(); patch.vcurves[3].print();
 	// SurfacePatch
 	Curve vcurve, ucurve;
-	vcurve.pt1 = bezcurveinterp(patch.vcurves[0], u);
-	vcurve.pt2 = bezcurveinterp(patch.vcurves[1], u); 
-	vcurve.pt3 = bezcurveinterp(patch.vcurves[2], u); 
-	vcurve.pt4 = bezcurveinterp(patch.vcurves[3], u);
+	vector<Vector> Vcurves1, Vcurves2, Vcurves3, Vcurves4;
+	vector<Vector> Ucurves1, Ucurves2, Ucurves3, Ucurves4;
+	Vcurves1 = bezcurveinterp(patch.vcurves[0], u);
+	Vcurves2 = bezcurveinterp(patch.vcurves[1], u);
+	Vcurves3 = bezcurveinterp(patch.vcurves[2], u);
+	Vcurves4 = bezcurveinterp(patch.vcurves[3], u);
+
+	vcurve.pt1 = Vcurves1[0];
+	vcurve.pt2 = Vcurves2[0];
+	vcurve.pt3 = Vcurves3[0];
+	vcurve.pt4 = Vcurves4[0];
 
 	//build control points for a Bezier curve in u 
-	ucurve.pt1 = bezcurveinterp(patch.ucurves[0], v);
-	ucurve.pt2 = bezcurveinterp(patch.ucurves[1], v);
-	ucurve.pt3 = bezcurveinterp(patch.ucurves[2], v);
-	ucurve.pt4 = bezcurveinterp(patch.ucurves[3], v);
+	Ucurves1 = bezcurveinterp(patch.ucurves[0], v);
+	Ucurves2 = bezcurveinterp(patch.ucurves[1], v);
+	Ucurves3 = bezcurveinterp(patch.ucurves[2], v);
+	Ucurves4 = bezcurveinterp(patch.ucurves[3], v);
+
+	ucurve.pt1 = Ucurves1[0];
+	ucurve.pt2 = Ucurves2[0];
+	ucurve.pt3 = Ucurves3[0];
+	ucurve.pt4 = Ucurves4[0];
 	// evaluate surface and derivative for u and v 
-	Vector p, dPdv;
+
 	// p, dPdv = bezcurveinterp(vcurve, v);
 	// p, dPdu = bezcurveinterp(ucurve, u);
-	p = bezcurveinterp(vcurve, v);
-	p = bezcurveinterp(ucurve, u);
+	vector<Vector> result1 = bezcurveinterp(vcurve, v);
+	vector<Vector> result2 = bezcurveinterp(ucurve, u);
+
+	Vector p = result1[0]; Vector dPdv = result1[1]; Vector dPdu = result2[1];
+	// p = bezcurveinterp(vcurve, v);
+	// p = bezcurveinterp(ucurve, u);
 	// // # take cross product of partials to find normal 
-	// n = cross(dPdu, dPdv);
-	// n = n / length(n);
-	return p;
+	Vector n = dPdu.cross_product(dPdv);
+	n.normalize(); //print("Normal = "); //print(n);
+	vector<Vector> newResult; newResult.push_back(p); newResult.push_back(n);
+	return newResult;
 }
 
 /* Saves the point in structure to be converted to triangles then rendered.*/
@@ -212,19 +290,24 @@ void subdividePatch(SurfacePatch sp, float step) {
 	float epsilon = 0.80f; //BecauseI I don't know the real value
 	int numdiv = ((1 + epsilon) / step);
 	numSubdivisions = numdiv;
-	cout << "NumDiv = " << numdiv << endl;
+	// cout << "NumDiv = " << numdiv << endl;
 	//for each parametric value of u 
 	for (int iu = 0; iu < numdiv; iu++) {
 		float u = iu * step;
-		print("u = ", u);
+		// print("u = ", u);
 		// for each parametric value of v 
 		for (int iv = 0; iv < numdiv; iv++) {
 			float v = iv * step;
-			print("v = ", v);
+			// print("v = ", v);
 		// evaluate surface
-			Vector p = Vector();
-			Vector n = Vector();
-			p = bezpatchinterp(sp, u, v);
+			vector<Vector> result;
+			result = bezpatchinterp(sp, u, v);
+			Vector p = result[0];
+			Vector n = result[1];
+			p.makeNormal(n);
+			// print("Print the normal = "); 
+			// print(p.normal);
+			// I am not sure how to do this
 			savesurfacepointandnormal(p);
 		}
 	}
@@ -354,7 +437,8 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < list_of_SPatches.size(); i++) {
 		print("Number of patches = ", list_of_SPatches.size());
 		if (isUniform) {
-			list_of_SPatches[i].print(); list_of_SPatches[i].makeCurves();
+			// list_of_SPatches[i].print(); 
+			list_of_SPatches[i].makeCurves();
 			subdividePatch(list_of_SPatches[i], step_size);
 		}
 		//subdivide each patch

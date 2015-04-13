@@ -3,12 +3,14 @@
 
 #include <iostream>
 #include <cmath>
+#include <vector>
 
 using namespace std;
 
 class Vector {
   public:
 	float x, y, z, w;
+	vector<float> normal;
 
 	Vector();
 	Vector(int, int, int);
@@ -19,6 +21,7 @@ class Vector {
 	void subtract (Vector, Vector);
 	void scalar_multiply (Vector, float);
 	void scalar_divide (Vector, float);
+	void makeNormal(Vector);
 
     Vector operator+(const Vector& v);
 	Vector operator-(const Vector& v);
@@ -36,6 +39,7 @@ class Vector {
 	void normalize();
 	float dot_product(Vector);
 	void print();
+	Vector cross_product(Vector);
 };
 
 float dot_product(Vector, Vector);

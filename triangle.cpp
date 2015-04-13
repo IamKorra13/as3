@@ -3,22 +3,22 @@
 #include <fstream>
 #include <cmath>
 #include <algorithm> 
+#include "vector.h"
 
 using namespace std;
 
 class Triangle {
 	public:
 		Triangle();
-		Triangle(vector<float>, vector<float>, vector<float>);
-		vector<float> v1, v2, v3;
+		Triangle(Vector, Vector, Vector);
+		Vector v1, v2, v3, normal;
 };
 
 Triangle::Triangle() {
-	v1.push_back(0.0f); v1.push_back(0.0f); v1.push_back(0.0f);
-	v2.push_back(0.0f); v2.push_back(0.0f); v2.push_back(0.0f);
-	v3.push_back(0.0f); v3.push_back(0.0f); v3.push_back(0.0f);
+	v1 = Vector(); v2 = Vector(); v3 = Vector(); 
+	normal = Vector();
 }
 
-Triangle::Triangle(vector<float> iv1, vector<float> iv2, vector<float> iv3) {
+Triangle::Triangle(Vector iv1, Vector iv2, Vector iv3) {
 	v1 = iv1; v2 = iv2; v3 = iv3;
 }
