@@ -12,6 +12,7 @@ class Triangle {
 		Triangle();
 		Triangle(Vector, Vector, Vector);
 		Vector v1, v2, v3, normal;
+        void print();
 };
 
 Triangle::Triangle() {
@@ -21,4 +22,8 @@ Triangle::Triangle() {
 
 Triangle::Triangle(Vector iv1, Vector iv2, Vector iv3) {
 	v1 = iv1; v2 = iv2; v3 = iv3;
+}
+
+void Triangle::print() {
+    cout << "Triangle: "; v1.print(); v2.print(); v3.print(); cout << endl;
 }
