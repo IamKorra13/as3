@@ -48,13 +48,15 @@ vector<Triangle> list_triangles;
 vector<SurfacePatch> list_of_SPatches;
 vector<vector<Vector> > points_to_Render;
 vector<Vector> curlevel;
-bool isUniform = false;
-bool isAdaptive = false;
+
 float step_size = 0.0f;
-bool changeColor = false;
 //The number of divisions per side pf surface patch
 int numSubdivisions = 0;
+
+// user settings
 bool wireframe = false;
+bool isAdaptive = false;
+bool flatShading = false;
 
 
 void initScene(){
@@ -79,8 +81,13 @@ void drawTriangle(Triangle tri) {
     Vector v2 = tri.v2;
     Vector v3 = tri.v3;
     glBegin(GL_TRIANGLES);
+    
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glNormal3f(v1.normal[0], v1.normal[1], v1.normal[2]);
     glVertex3f(v1.x, v1.y, v1.z);
+    glNormal3f(v2.normal[0], v2.normal[1], v2.normal[2]);
     glVertex3f(v2.x, v2.y, v2.z);
+    glNormal3f(v3.normal[0], v3.normal[1], v3.normal[2]);
     glVertex3f(v3.x, v3.y, v3.z);
     glEnd();
 }
@@ -116,6 +123,17 @@ void keyBoardFunc(unsigned char key, int x, int y) {
                 else {
                     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                     wireframe = false;
+                }
+                myDisplay();
+                break;
+            case 's':
+                if(flatShading == false) {
+                    glShadeModel(GL_SMOOTH);
+                    flatShading = true;
+                }
+                else {
+                    glShadeModel(GL_FLAT);
+                    flatShading = false;
                 }
                 myDisplay();
                 break;
@@ -211,6 +229,7 @@ vector<Vector> bezpatchinterp(SurfacePatch patch, float u, float v) {
     return newResult;
 }
 
+/* populates triangle list */
 void makeTriangles() {
     for (int i = 0; i < numSubdivisions; i++) {
         for (int j = 0; j < numSubdivisions; j++) {
@@ -236,7 +255,7 @@ void savesurfacepointandnormal(Vector p) {
 }
 
 /*Uniform Subdivision.*/
-void subdividePatch(SurfacePatch sp, float step) {
+void subdividePatchUniform(SurfacePatch sp, float step) {
     //compute how many subdivisions there # are for this step size
     int numdiv = ((1 + FLT_EPSILON) / step);
     numSubdivisions = numdiv;
@@ -260,7 +279,9 @@ void subdividePatch(SurfacePatch sp, float step) {
     }
 }
 
-
+/*Uniform Subdivision.*/
+void subdividePatchAdaptive(SurfacePatch sp, float error) {
+}
 
 
 void parse_input(const char* input_file) {
@@ -275,6 +296,7 @@ void parse_input(const char* input_file) {
         return; // exit if file not found
     }
     bool firstLine = false;
+    
     //Number of curves per surface patch
     int num_curves = 0;
     SurfacePatch *sp = new SurfacePatch();
@@ -303,7 +325,6 @@ void parse_input(const char* input_file) {
         }
         
         // process tokens
-        
         for (int i = 0; i < n; i++) { // n = #of tokens
             if (firstLine) {
                 if (num_curves == 0) {
@@ -343,25 +364,34 @@ int main(int argc, char *argv[]) {
             if (strcmp(argv[3], "-a") == 0) {
                 isAdaptive = true;
             }
-        } else {
-            isUniform = true;
         }
     }
-    
-    cout << "Adaptive status = " << isAdaptive << " Uniform Status = " << isUniform << endl;
+
     cout << "Step Size = " << step_size << endl;
     
+    if(!isAdaptive) {
     // Given a patch preform uniform subdisision
-    for (int i = 0; i < list_of_SPatches.size(); i++) {
-        if (isUniform) {
+        for (int i = 0; i < list_of_SPatches.size(); i++) {
             list_of_SPatches[i].makeCurves();
             
-            subdividePatch(list_of_SPatches[i], step_size);
+            subdividePatchUniform(list_of_SPatches[i], step_size);
             
             points_to_Render.push_back(curlevel);
             makeTriangles();
         }
     }
+    // Adaptive subdivision
+    else {
+        for (int i = 0; i < list_of_SPatches.size(); i++) {
+            list_of_SPatches[i].makeCurves();
+            
+            subdividePatchAdaptive(list_of_SPatches[i], step_size);
+            
+            points_to_Render.push_back(curlevel);
+            makeTriangles();
+        }
+    }
+    
     
     //This initializes glut
     glutInit(&argc, argv);
@@ -378,10 +408,29 @@ int main(int argc, char *argv[]) {
     glutInitWindowPosition(0,0);
     windowID = glutCreateWindow(argv[0]);  // saving the ID of the window possibly for quiting on spacebar
     
+    //shading
+    glShadeModel(GL_FLAT);
+    glEnable(GL_NORMALIZE);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_DEPTH_TEST);
+    
+    float diffuse0[]={1.0, 0.0, 0.0, 1.0};
+    float ambient0[]={1.0, 0.0, 0.0, 1.0};
+    float specular0[]={1.0, 0.0, 0.0, 1.0};
+    float light0_pos[]={1.0, 2.0, 3,0, 1.0};
+    
+    glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, ambient0);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, specular0);
+    
+    glEnable(GL_LIGHT0);
+    
     initScene();							// quick function to set up scene
     glutDisplayFunc(myDisplay);				// function to run when its time to draw something
     glutReshapeFunc(myReshape);       // function to run when the window gets resized
-    glutKeyboardFunc(keyBoardFunc);		// function to run to exit window with spacebar		
+    glutKeyboardFunc(keyBoardFunc);		// function to run to exit window with spacebar
+    
     
     glutMainLoop();							// infinite loop that will keep drawing and resizing
     // and whatever else
