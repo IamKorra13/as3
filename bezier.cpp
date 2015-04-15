@@ -58,6 +58,10 @@ bool wireframe = false;
 bool isAdaptive = false;
 bool flatShading = false;
 
+// rotation
+float rotate_x = 0.0f;
+float rotate_y = 0.0f;
+
 
 void initScene(){
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f); // Clear to black, fully transparent
@@ -81,11 +85,6 @@ void drawTriangle(Triangle tri) {
     Vector v2 = tri.v2;
     Vector v3 = tri.v3;
     
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    
-    glRotatef(90.0, 0.0, 1.0, 0.0);
-    
     glBegin(GL_TRIANGLES);
     
     glColor3f(1.0f, 0.0f, 0.0f);
@@ -97,7 +96,7 @@ void drawTriangle(Triangle tri) {
     glVertex3f(v3.x, v3.y, v3.z);
     
     glEnd();
-    glPopMatrix();
+    
 }
 
 /* Main display function. */
@@ -107,10 +106,15 @@ void myDisplay() {
     glMatrixMode(GL_MODELVIEW);			        // indicate we are specifying camera transformations
     glLoadIdentity();
     
+    glPushMatrix();
+    
+    glRotatef(rotate_y, 1.0, 0.0, 0.0);
+    glRotatef(rotate_x, 0.0, 1.0, 0.0);
     /* Draws the triangles.*/
     for (int i = 0; i < list_triangles.size(); i++) {
         drawTriangle(list_triangles[i]);
     }
+    glPopMatrix();
     
     glFlush();
     glutSwapBuffers();					// swap buffers (we earlier set double buffer)
@@ -145,25 +149,29 @@ void keyBoardFunc(unsigned char key, int x, int y) {
                 }
                 myDisplay();
                 break;
+                
         }
 }
 
 //For the move tool
 void processSpecialKeys(int key, int x, int y) {
-    float red, blue, green;
     switch(key) {
-        case GLUT_KEY_F1 :
-            red = 1.0;
-            green = 0.0;
-            blue = 0.0; break;
-        case GLUT_KEY_F2 :
-            red = 0.0;
-            green = 1.0;
-            blue = 0.0; break;
-        case GLUT_KEY_F3 :
-            red = 0.0;
-            green = 0.0;
-            blue = 1.0; break;
+        case GLUT_KEY_UP:
+            rotate_y += 10.0f;
+            myDisplay();
+            break;
+        case GLUT_KEY_DOWN:
+            rotate_y -= 10.0f;
+            myDisplay();
+            break;
+        case GLUT_KEY_RIGHT:
+            rotate_x -= 10.0f;
+            myDisplay();
+            break;
+        case GLUT_KEY_LEFT:
+            rotate_x += 10.0f;
+            myDisplay();
+            break;
     }
 }
 
@@ -435,9 +443,10 @@ int main(int argc, char *argv[]) {
     glEnable(GL_LIGHT0);
     
     initScene();							// quick function to set up scene
-    glutDisplayFunc(myDisplay);				// function to run when its time to draw something
+    glutDisplayFunc(myDisplay);			// function to run when its time to draw something
     glutReshapeFunc(myReshape);       // function to run when the window gets resized
-    glutKeyboardFunc(keyBoardFunc);		// function to run to exit window with spacebar
+    glutKeyboardFunc(keyBoardFunc);
+    glutSpecialFunc(processSpecialKeys);
     
     
     glutMainLoop();							// infinite loop that will keep drawing and resizing
