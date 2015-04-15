@@ -80,6 +80,12 @@ void drawTriangle(Triangle tri) {
     Vector v1 = tri.v1;
     Vector v2 = tri.v2;
     Vector v3 = tri.v3;
+    
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    
+    glRotatef(90.0, 0.0, 1.0, 0.0);
+    
     glBegin(GL_TRIANGLES);
     
     glColor3f(1.0f, 0.0f, 0.0f);
@@ -89,7 +95,9 @@ void drawTriangle(Triangle tri) {
     glVertex3f(v2.x, v2.y, v2.z);
     glNormal3f(v3.normal[0], v3.normal[1], v3.normal[2]);
     glVertex3f(v3.x, v3.y, v3.z);
+    
     glEnd();
+    glPopMatrix();
 }
 
 /* Main display function. */
@@ -257,15 +265,15 @@ void savesurfacepointandnormal(Vector p) {
 /*Uniform Subdivision.*/
 void subdividePatchUniform(SurfacePatch sp, float step) {
     //compute how many subdivisions there # are for this step size
-    int numdiv = ((1 + FLT_EPSILON) / step);
+    int numdiv = ((1 + 0.005f) / step);
     numSubdivisions = numdiv;
     
     //for each parametric value of u
-    for (int iu = 0; iu < numdiv + 1; iu++) {
+    for (int iu = 0; iu < numdiv+1; iu++) {
         float u = iu * step;
         
         // for each parametric value of v
-        for (int iv = 0; iv < numdiv + 1; iv++) {
+        for (int iv = 0; iv < numdiv+1; iv++) {
             float v = iv * step;
             
             // evaluate surface
@@ -417,7 +425,7 @@ int main(int argc, char *argv[]) {
     float diffuse0[]={1.0, 0.0, 0.0, 1.0};
     float ambient0[]={1.0, 0.0, 0.0, 1.0};
     float specular0[]={1.0, 0.0, 0.0, 1.0};
-    float light0_pos[]={1.0, 2.0, 3,0, 1.0};
+    float light0_pos[]={-1.0, -2.0, -3,0, -1.0};
     
     glLightfv(GL_LIGHT0, GL_POSITION, light0_pos);
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient0);
