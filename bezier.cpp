@@ -343,20 +343,27 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
     Triangle triangle1 = Triangle(sp.cp[0][0], sp.cp[0][3], sp.cp[3][0]);
     triangle1.uv1 = Vector(0.0f, 0.0f, 0.0f); triangle1.uv2 = Vector(1.0f, 0.0f, 0.0f); triangle1.uv3 = Vector(0.0f, 1.0f, 0.0f);
     Triangle triangle2 = Triangle(sp.cp[3][3], sp.cp[3][0], sp.cp[0][3]);
-    triangle2.uv1 = Vector(1.0f, 1.0f, 0.0f); triangle1.uv2 = Vector(0.0f, 1.0f, 0.0f); triangle1.uv3 = Vector(1.0f, 0.0f, 0.0f);
+    triangle2.uv1 = Vector(1.0f, 1.0f, 0.0f); triangle2.uv2 = Vector(0.0f, 1.0f, 0.0f); triangle2.uv3 = Vector(1.0f, 0.0f, 0.0f);
     triangles.push_back(triangle1);
     triangles.push_back(triangle2);
     
-    while(cntr < 4) {
+    while(!triangles.empty()) {
         mp12 = false; mp23 = false; mp13 = false;
         Triangle curTriangle = triangles.back();
-        curTriangle.print();
+        triangles.pop_back();
+        
+        //cout << "curTriangle: "; curTriangle.print();
+        //cout << "uv1: "; curTriangle.uv1.print(); cout << "uv2: "; curTriangle.uv2.print(); cout << "uv3: "; curTriangle.uv3.print();
+        cout << endl;
         
         //side v1, v2
         Vector midpoint_xy12 = (curTriangle.v1 + curTriangle.v2)/2.0f;
+        //cout << "midpoint_xy12: "; midpoint_xy12.print();
         Vector midpoint_uv12 = (curTriangle.uv1 + curTriangle.uv2)/2.0f;
+        //cout << "midpoint_uv12: "; midpoint_uv12.print();
         vector<Vector> point_on_curve12 = bezpatchinterp(sp, midpoint_uv12.x, midpoint_uv12.y);
         Vector p12 = point_on_curve12[0];
+        //cout << "p12: "; p12.print();
         
         //check the difference
         float diff12 = sqrt(pow((midpoint_xy12.x-p12.x), 2) + pow((midpoint_xy12.y-p12.y), 2) + pow((midpoint_xy12.z-p12.z), 2));
@@ -390,14 +397,12 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
             mp13 = true;
         }
         
-        cout << "diff12: " << diff12 << " diff23: " << diff23 << " diff13: " << diff13 << endl;
-        
-        //remove from triangles list
-        triangles.pop_back();
+        //cout << "diff12: " << diff12 << " diff23: " << diff23 << " diff13: " << diff13 << endl;
         
         //add new triangles
         // 0 0 1
         if(!mp23 && !mp12 && mp13) {
+            //cout << "case 1" << endl;
             Triangle tri1 = Triangle(curTriangle.v1, curTriangle.v2, p13);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = curTriangle.uv2; tri1.uv3 = midpoint_uv13;
             triangles.push_back(tri1);
@@ -409,6 +414,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         
         // 0 1 0
         else if(!mp23 && mp12 && !mp13) {
+            //cout << "case 2" << endl;
             Triangle tri1 = Triangle(curTriangle.v1, p12, curTriangle.v3);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = midpoint_uv12; tri1.uv3 = curTriangle.uv3;
             triangles.push_back(tri1);
@@ -420,6 +426,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         
         // 1 0 0
         else if(mp23 && !mp12 && !mp13) {
+            //cout << "case 3" << endl;
             Triangle tri1 = Triangle(curTriangle.v1, p23, curTriangle.v3);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = midpoint_uv23; tri1.uv3 = curTriangle.uv3;
             triangles.push_back(tri1);
@@ -431,6 +438,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         
         // 0 1 1
         else if(!mp23 && mp12 && mp13) {
+            //cout << "case 4" << endl;
             Triangle tri1 = Triangle(curTriangle.v1, p12, p13);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = midpoint_uv12; tri1.uv3 = midpoint_xy13;
             triangles.push_back(tri1);
@@ -446,6 +454,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         
         // 1 1 0
         else if(mp23 && mp12 && !mp13) {
+            //cout << "case 5" << endl;
             Triangle tri1 = Triangle(curTriangle.v1, p23, curTriangle.v3);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = midpoint_uv23; tri1.uv3 = curTriangle.uv3;
             triangles.push_back(tri1);
@@ -461,6 +470,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         
         // 1 0 1
         else if(mp23 && !mp12 && mp13) {
+            //cout << "case 6" << endl;
             Triangle tri1 = Triangle(p13, p23, curTriangle.v3);
             tri1.uv1 = midpoint_uv13; tri1.uv2 = midpoint_uv23; tri1.uv3 = curTriangle.uv3;
             triangles.push_back(tri1);
@@ -476,6 +486,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         
         // 1 1 1
         else if(mp12 && mp23 && mp13) {
+            //cout << "case 7" << endl;
             Triangle tri1 = Triangle(curTriangle.v1, p12, p13);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = midpoint_uv12; tri1.uv3 = midpoint_uv13;
             triangles.push_back(tri1);
@@ -495,11 +506,12 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         
         //triangle is good, add it to final list of triangles
         else {
+            //cout << "it's good";
             list_triangles.push_back(curTriangle);
         }
         
-        cout << "Size of triangles list: " << triangles.size() << endl;
-        cout << "mp12: " << mp12 << " mp23: " << mp23 << " mp13: " << mp13 << endl;
+        //cout << "Size of triangles list: " << triangles.size() << endl;
+        //cout << "mp12: " << mp12 << " mp23: " << mp23 << " mp13: " << mp13 << endl;
         cout << endl;
         cntr++;
     }
