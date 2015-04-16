@@ -115,6 +115,10 @@ void Vector::normalize() {
 	}
 }
 
+float Vector::magnitude() {
+    return sqrt(pow(x, 2) + pow(y, 2) + pow(z, 2));
+}
+
 void Vector::makeNormal(Vector n) {
 	normal[0] = n.x; normal[1] = n.y; normal[2] = n.z;
 }

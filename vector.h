@@ -22,6 +22,7 @@ class Vector {
 	void scalar_multiply (Vector, float);
 	void scalar_divide (Vector, float);
 	void makeNormal(Vector);
+    float magnitude();
 
     Vector operator+(const Vector& v);
 	Vector operator-(const Vector& v);

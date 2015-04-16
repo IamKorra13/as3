@@ -12,12 +12,14 @@ class Triangle {
 		Triangle();
 		Triangle(Vector, Vector, Vector);
 		Vector v1, v2, v3, normal;
+        Vector uv1, uv2, uv3; // vertices in u and v
 		void print();
 };
 
 Triangle::Triangle() {
 	v1 = Vector(); v2 = Vector(); v3 = Vector(); 
 	normal = Vector();
+    uv1 = Vector(); uv2 = Vector(); uv3 = Vector();
 }
 
 Triangle::Triangle(Vector iv1, Vector iv2, Vector iv3) {
