@@ -58,9 +58,12 @@ bool wireframe = false;
 bool isAdaptive = false;
 bool flatShading = false;
 
-// rotation
+
 float rotate_x = 0.0f;
 float rotate_y = 0.0f;
+float scale = 1.0f;
+float translate_x = 0.0f;
+float translate_y = 0.0f;
 
 
 void initScene(){
@@ -111,6 +114,9 @@ void myDisplay() {
     
     glRotatef(rotate_y, 1.0, 0.0, 0.0);
     glRotatef(rotate_x, 0.0, 1.0, 0.0);
+    glScalef(scale, scale, scale);
+    glTranslatef(translate_x, translate_y, 0.0);
+    //glScalef(2.0, 2.0, 2.0);
     /* Draws the triangles.*/
     for (int i = 0; i < list_triangles.size(); i++) {
         drawTriangle(list_triangles[i]);
@@ -150,27 +156,56 @@ void keyBoardFunc(unsigned char key, int x, int y) {
                 }
                 myDisplay();
                 break;
+            case '+':
+                scale += 0.1f;
+                myDisplay();
+                break;
+            case '-':
+                scale -= 0.1f;
+                myDisplay();
+                break;
                 
         }
 }
 
 //For the move tool
 void processSpecialKeys(int key, int x, int y) {
+    int mod = glutGetModifiers();
     switch(key) {
         case GLUT_KEY_UP:
-            rotate_y += 10.0f;
+            if(mod == GLUT_ACTIVE_SHIFT) {
+                translate_y += 0.3f;
+            }
+            else {
+                rotate_y += 10.0f;
+            }
             myDisplay();
             break;
         case GLUT_KEY_DOWN:
-            rotate_y -= 10.0f;
+            if(mod == GLUT_ACTIVE_SHIFT) {
+                translate_y -= 0.3f;
+            }
+            else {
+                rotate_y -= 10.0f;
+            }
             myDisplay();
             break;
         case GLUT_KEY_RIGHT:
-            rotate_x -= 10.0f;
+            if(mod == GLUT_ACTIVE_SHIFT) {
+                translate_x += 0.3f;
+            }
+            else {
+                rotate_x -= 10.0f;
+            }
             myDisplay();
             break;
         case GLUT_KEY_LEFT:
-            rotate_x += 10.0f;
+            if(mod == GLUT_ACTIVE_SHIFT) {
+                translate_x -= 0.3f;
+            }
+            else {
+                rotate_x += 10.0f;
+            }
             myDisplay();
             break;
     }
@@ -302,6 +337,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
     bool mp12 = false;
     bool mp23 = false;
     bool mp13 = false; // if true, split that side
+    int cntr = 0;
     
     // add in initial triangles
     Triangle triangle1 = Triangle(sp.cp[0][0], sp.cp[0][3], sp.cp[3][0]);
@@ -311,7 +347,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
     triangles.push_back(triangle1);
     triangles.push_back(triangle2);
     
-    while(!triangles.empty()) {
+    while(cntr < 4) {
         mp12 = false; mp23 = false; mp13 = false;
         Triangle curTriangle = triangles.back();
         curTriangle.print();
@@ -465,6 +501,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         cout << "Size of triangles list: " << triangles.size() << endl;
         cout << "mp12: " << mp12 << " mp23: " << mp23 << " mp13: " << mp13 << endl;
         cout << endl;
+        cntr++;
     }
 }
 
