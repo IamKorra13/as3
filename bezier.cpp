@@ -101,8 +101,9 @@ void drawTriangle(Triangle tri) {
 
 /* Main display function. */
 void myDisplay() {
-    glClear(GL_COLOR_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);				// clear the color buffer
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);		// clear the color buffer
     glMatrixMode(GL_MODELVIEW);			        // indicate we are specifying camera transformations
     glLoadIdentity();
     
@@ -413,7 +414,7 @@ int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
     
     //This tells glut to use a double-buffered window with red, green, and blue channels 
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     
     // Initalize theviewport size
     viewport.w = 400;
