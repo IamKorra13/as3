@@ -312,7 +312,9 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
     triangles.push_back(triangle2);
     
     while(!triangles.empty()) {
+        mp12 = false; mp23 = false; mp13 = false;
         Triangle curTriangle = triangles.back();
+        curTriangle.print();
         
         //side v1, v2
         Vector midpoint_xy12 = (curTriangle.v1 + curTriangle.v2)/2.0f;
@@ -352,103 +354,105 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
             mp13 = true;
         }
         
+        cout << "diff12: " << diff12 << " diff23: " << diff23 << " diff13: " << diff13 << endl;
+        
         //remove from triangles list
         triangles.pop_back();
         
         //add new triangles
         // 0 0 1
         if(!mp23 && !mp12 && mp13) {
-            Triangle tri1 = Triangle(curTriangle.v1, curTriangle.v2, midpoint_xy13);
+            Triangle tri1 = Triangle(curTriangle.v1, curTriangle.v2, p13);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = curTriangle.uv2; tri1.uv3 = midpoint_uv13;
             triangles.push_back(tri1);
             
-            Triangle tri2 = Triangle(midpoint_xy13, curTriangle.v2, curTriangle.v3);
+            Triangle tri2 = Triangle(p13, curTriangle.v2, curTriangle.v3);
             tri2.uv1 = midpoint_uv13; tri2.uv2 = curTriangle.uv2; tri2.uv3 = curTriangle.uv3;
             triangles.push_back(tri2);
         }
         
         // 0 1 0
         else if(!mp23 && mp12 && !mp13) {
-            Triangle tri1 = Triangle(curTriangle.v1, midpoint_xy12, curTriangle.v3);
+            Triangle tri1 = Triangle(curTriangle.v1, p12, curTriangle.v3);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = midpoint_uv12; tri1.uv3 = curTriangle.uv3;
             triangles.push_back(tri1);
             
-            Triangle tri2 = Triangle(midpoint_xy12, curTriangle.v2, curTriangle.v3);
+            Triangle tri2 = Triangle(p12, curTriangle.v2, curTriangle.v3);
             tri2.uv1 = midpoint_uv12; tri2.uv2 = curTriangle.uv2; tri2.uv3 = curTriangle.uv3;
             triangles.push_back(tri2);
         }
         
         // 1 0 0
         else if(mp23 && !mp12 && !mp13) {
-            Triangle tri1 = Triangle(curTriangle.v1, midpoint_xy23, curTriangle.v3);
+            Triangle tri1 = Triangle(curTriangle.v1, p23, curTriangle.v3);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = midpoint_uv23; tri1.uv3 = curTriangle.uv3;
             triangles.push_back(tri1);
             
-            Triangle tri2 = Triangle(curTriangle.v1, midpoint_xy23, curTriangle.v2);
+            Triangle tri2 = Triangle(curTriangle.v1, p23, curTriangle.v2);
             tri2.uv1 = curTriangle.uv1; tri2.uv2 = midpoint_uv23; tri2.uv3 = curTriangle.uv2;
             triangles.push_back(tri2);
         }
         
         // 0 1 1
         else if(!mp23 && mp12 && mp13) {
-            Triangle tri1 = Triangle(curTriangle.v1, midpoint_xy12, midpoint_xy13);
+            Triangle tri1 = Triangle(curTriangle.v1, p12, p13);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = midpoint_uv12; tri1.uv3 = midpoint_xy13;
             triangles.push_back(tri1);
             
-            Triangle tri2 = Triangle(midpoint_xy13, midpoint_xy12, curTriangle.v3);
+            Triangle tri2 = Triangle(p13, p12, curTriangle.v3);
             tri2.uv1 = midpoint_uv13; tri2.uv2 = midpoint_uv12; tri2.uv3 = curTriangle.uv3;
             triangles.push_back(tri2);
             
-            Triangle tri3 = Triangle(midpoint_xy12, curTriangle.v2, curTriangle.v3);
+            Triangle tri3 = Triangle(p12, curTriangle.v2, curTriangle.v3);
             tri3.uv1 = midpoint_uv12; tri3.uv2 = curTriangle.uv2; tri3.uv3 = curTriangle.uv3;
             triangles.push_back(tri3);
         }
         
         // 1 1 0
         else if(mp23 && mp12 && !mp13) {
-            Triangle tri1 = Triangle(curTriangle.v1, midpoint_xy23, curTriangle.v3);
+            Triangle tri1 = Triangle(curTriangle.v1, p23, curTriangle.v3);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = midpoint_uv23; tri1.uv3 = curTriangle.uv3;
             triangles.push_back(tri1);
             
-            Triangle tri2 = Triangle(curTriangle.v1, midpoint_xy12, midpoint_xy23);
+            Triangle tri2 = Triangle(curTriangle.v1, p12, p23);
             tri2.uv1 = curTriangle.uv1; tri2.uv2 = midpoint_uv12; tri2.uv3 = midpoint_uv23;
             triangles.push_back(tri2);
             
-            Triangle tri3 = Triangle(midpoint_xy12, curTriangle.v2, midpoint_xy23);
+            Triangle tri3 = Triangle(p12, curTriangle.v2, p23);
             tri3.uv1 = midpoint_uv12; tri3.uv2 = curTriangle.uv2; tri3.uv3 = midpoint_uv23;
             triangles.push_back(tri3);
         }
         
         // 1 0 1
         else if(mp23 && !mp12 && mp13) {
-            Triangle tri1 = Triangle(midpoint_xy13, midpoint_xy23, curTriangle.v3);
+            Triangle tri1 = Triangle(p13, p23, curTriangle.v3);
             tri1.uv1 = midpoint_uv13; tri1.uv2 = midpoint_uv23; tri1.uv3 = curTriangle.uv3;
             triangles.push_back(tri1);
             
-            Triangle tri2 = Triangle(midpoint_xy13, curTriangle.v2, midpoint_xy23);
+            Triangle tri2 = Triangle(p13, curTriangle.v2, p23);
             tri2.uv1 = midpoint_uv13; tri2.uv2 = curTriangle.uv2; tri2.uv3 = midpoint_uv23;
             triangles.push_back(tri2);
             
-            Triangle tri3 = Triangle(curTriangle.v1, curTriangle.v2, midpoint_xy13);
+            Triangle tri3 = Triangle(curTriangle.v1, curTriangle.v2, p13);
             tri3.uv1 = curTriangle.uv1; tri3.uv2 = curTriangle.uv2; tri3.uv3 = midpoint_uv13;
             triangles.push_back(tri3);
         }
         
         // 1 1 1
         else if(mp12 && mp23 && mp13) {
-            Triangle tri1 = Triangle(curTriangle.v1, midpoint_xy12, midpoint_xy13);
+            Triangle tri1 = Triangle(curTriangle.v1, p12, p13);
             tri1.uv1 = curTriangle.uv1; tri1.uv2 = midpoint_uv12; tri1.uv3 = midpoint_uv13;
             triangles.push_back(tri1);
             
-            Triangle tri2 = Triangle(midpoint_xy12, curTriangle.v2, midpoint_xy23);
+            Triangle tri2 = Triangle(p12, curTriangle.v2, p23);
             tri2.uv1 = midpoint_uv12; tri2.uv2 = curTriangle.uv2; tri2.uv3 = midpoint_uv23;
             triangles.push_back(tri2);
             
-            Triangle tri3 = Triangle(midpoint_xy13, midpoint_xy23, curTriangle.v3);
+            Triangle tri3 = Triangle(p13, p23, curTriangle.v3);
             tri3.uv1 = midpoint_uv13; tri3.uv2 = midpoint_uv23; tri3.uv3 = curTriangle.uv3;
             triangles.push_back(tri3);
             
-            Triangle tri4 = Triangle(midpoint_xy12, midpoint_xy23, midpoint_xy13);
+            Triangle tri4 = Triangle(p12, p23, p13);
             tri4.uv1 = midpoint_uv12; tri4.uv2 = midpoint_uv23; tri4.uv3 = midpoint_uv13;
             triangles.push_back(tri4);
         }
@@ -457,6 +461,10 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         else {
             list_triangles.push_back(curTriangle);
         }
+        
+        cout << "Size of triangles list: " << triangles.size() << endl;
+        cout << "mp12: " << mp12 << " mp23: " << mp23 << " mp13: " << mp13 << endl;
+        cout << endl;
     }
 }
 
