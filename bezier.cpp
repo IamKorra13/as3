@@ -340,9 +340,22 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
     int cntr = 0;
     
     // add in initial triangles
-    Triangle triangle1 = Triangle(sp.cp[0][0], sp.cp[0][3], sp.cp[3][0]);
+    Vector v1 = sp.cp[0][0]; Vector v2 = sp.cp[0][3]; Vector v3 = sp.cp[3][0];
+    //Make the normal for the first point
+    Vector first = v2 - v1; Vector second = v3 - v1;
+    Vector cross_prod = first.cross_product(second);
+    v1.makeNormal(cross_prod); v2.makeNormal(cross_prod); v3.makeNormal(cross_prod);
+    // Triangle triangle1 = Triangle(sp.cp[0][0], sp.cp[0][3], sp.cp[3][0]);
+    Triangle triangle1 = Triangle(v1, v2, v3);
     triangle1.uv1 = Vector(0.0f, 0.0f, 0.0f); triangle1.uv2 = Vector(1.0f, 0.0f, 0.0f); triangle1.uv3 = Vector(0.0f, 1.0f, 0.0f);
-    Triangle triangle2 = Triangle(sp.cp[3][3], sp.cp[3][0], sp.cp[0][3]);
+    
+
+    Vector v4 = sp.cp[3][3]; Vector v5 = sp.cp[3][0]; Vector v6 = sp.cp[0][3];
+    Vector first1 = v5 - v4; Vector second1 = v6 - v4;
+    Vector cross_prod1 = first1.cross_product(second1);
+    v4.makeNormal(cross_prod1); v5.makeNormal(cross_prod1); v6.makeNormal(cross_prod1);
+    // Triangle triangle2 = Triangle(sp.cp[3][3], sp.cp[3][0], sp.cp[0][3]);
+    Triangle triangle2 = Triangle(v4, v5, v6);
     triangle2.uv1 = Vector(1.0f, 1.0f, 0.0f); triangle2.uv2 = Vector(0.0f, 1.0f, 0.0f); triangle2.uv3 = Vector(1.0f, 0.0f, 0.0f);
     triangles.push_back(triangle1);
     triangles.push_back(triangle2);
@@ -363,6 +376,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         //cout << "midpoint_uv12: "; midpoint_uv12.print();
         vector<Vector> point_on_curve12 = bezpatchinterp(sp, midpoint_uv12.x, midpoint_uv12.y);
         Vector p12 = point_on_curve12[0];
+        p12.makeNormal(point_on_curve12[1]);
         //cout << "p12: "; p12.print();
         
         //check the difference
@@ -377,6 +391,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         Vector midpoint_uv23 = (curTriangle.uv2 + curTriangle.uv3)/2.0f;
         vector<Vector> point_on_curve23 = bezpatchinterp(sp, midpoint_uv23.x, midpoint_uv23.y);
         Vector p23 = point_on_curve23[0];
+        p23.makeNormal(point_on_curve23[1]);
         
         //check the difference
         float diff23 = sqrt(pow((midpoint_xy23.x-p23.x), 2) + pow((midpoint_xy23.y-p23.y), 2) + pow((midpoint_xy23.z-p23.z), 2));
@@ -390,6 +405,7 @@ void subdividePatchAdaptive(SurfacePatch sp, float error) {
         Vector midpoint_uv13 = (curTriangle.uv1 + curTriangle.uv3)/2.0f;
         vector<Vector> point_on_curve13 = bezpatchinterp(sp, midpoint_uv13.x, midpoint_uv13.y);
         Vector p13 = point_on_curve13[0];
+        p13.makeNormal(point_on_curve13[1]);
         
         //check the difference
         float diff13 = sqrt(pow((midpoint_xy13.x-p13.x), 2) + pow((midpoint_xy13.y-p13.y), 2) + pow((midpoint_xy13.z-p13.z), 2));
